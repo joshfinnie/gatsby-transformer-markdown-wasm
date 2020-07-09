@@ -1,4 +1,5 @@
 use yaml_rust::YamlEmitter;
+use serde::Serialize;
 use frontmatter::parse_and_find_content;
 use pulldown_cmark::{html, Options, Parser};
 
@@ -19,23 +20,29 @@ pub fn render_markdown(markdown_input: &str) -> String {
     return html_output;
 }
 
-#[wasm_bindgen]
-pub fn render(markdown_input: &str) -> String {
-    console_error_panic_hook::set_once();
-    let parsed = parse_and_find_content(markdown_input);
-    let (matter, content) = parsed.unwrap();
+#[derive(Serialize)]
+pub struct Data {
+    data: serde_json::Value,
+    content: String,
+}
 
-    if matter.is_some() {
+#[wasm_bindgen]
+pub fn render(markdown_input: &str) -> JsValue {
+    console_error_panic_hook::set_once(); // Helps return errors for debugging
+
+    let parsed = parse_and_find_content(markdown_input);
+    let (frontmatter, content) = parsed.unwrap();
+
+    if frontmatter.is_some() {
         let mut value = String::new();
         let mut emitter = YamlEmitter::new(&mut value);
-        emitter.dump(&matter.unwrap()).unwrap();
+        emitter.dump(&frontmatter.unwrap()).unwrap();
         let yaml_contents: serde_json::Value = serde_yaml::from_str(&value).unwrap();
-
-        let markdown_content: String = render_markdown(content).to_string();
-
-        return format!("{{\"data\": {}, \"content\": \"{}\"}}", yaml_contents.to_string(), &markdown_content[..markdown_content.len()-1]);
+        let data = Data{data: yaml_contents, content: render_markdown(content)};
+        return JsValue::from_serde(&data).unwrap();
     } else {
-        let markdown_content: String = render_markdown(content).to_string();
-        return format!("{{\"data\": {}, \"content\": \"{}\"}}", "null", &markdown_content[..markdown_content.len()-1]);
+        let yaml_contents: serde_json::Value = serde_json::Value::Null;
+        let data = Data{data: yaml_contents, content: render_markdown(content)};
+        return JsValue::from_serde(&data).unwrap();
     }
 }

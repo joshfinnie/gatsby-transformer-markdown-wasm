@@ -11,12 +11,13 @@ crate-type = ["cdylib", "rlib"]
 default = ["console_error_panic_hook"]
 
 [dependencies]
-wasm-bindgen = "0.2.64"
+wasm-bindgen = { version = "0.2.64", features = ["serde-serialize"] }
 pulldown-cmark = "0.5.3"
 frontmatter = "0.4.0"
 serde_yaml = "0.8.13"
 serde_json = "1.0.56"
 yaml-rust = "0.4.4"
+serde = { version = "1.0", features = ["derive"] }
 
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
