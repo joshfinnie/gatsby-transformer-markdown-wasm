@@ -13,13 +13,13 @@ pub fn test_render_markdown() {
 #[wasm_bindgen_test]
 pub fn test_render() {
     let markdown = "---\ntitle: Valid Yaml Test\n---\nsomething that's not yaml";
-    let result = render(markdown);
+    let result = render(markdown, Some(true));
     assert!(result.is_object());
 }
 
 #[wasm_bindgen_test]
 pub fn test_render_without_frontmatter() {
     let markdown = "something that's not yaml";
-    let result = render(markdown);
+    let result = render(markdown, Some(true));
     assert!(result.is_object());
 }

@@ -1,6 +1,5 @@
-use yaml_rust::YamlEmitter;
+use regex::Regex;
 use serde::Serialize;
-use frontmatter::parse_and_find_content;
 use pulldown_cmark::{html, Options, Parser};
 
 use wasm_bindgen::prelude::*;
@@ -20,6 +19,21 @@ pub fn render_markdown(markdown_input: &str) -> String {
     return html_output;
 }
 
+fn get_frontmatter(markdown_input: &str) -> (Option<String>, &str) {
+    let re = Regex::new(r#"^(---[[:space:]]?)([\w\n:"' -/]*)?([[:space:]]?---)\n*(.*)"#).unwrap();
+
+    let caps = re.captures(markdown_input);
+    let (frontmatter, content) = match caps.is_some() {
+        true => {
+            let caps = caps.unwrap();
+            (Some(caps.get(2).map_or("", |m| m.as_str()).to_string()), caps.get(4).map_or("", |m| m.as_str()))
+        },
+        false => (None, markdown_input),
+    };
+
+    (frontmatter, content)
+}
+
 #[derive(Serialize)]
 pub struct Data {
     data: serde_json::Value,
@@ -27,22 +41,24 @@ pub struct Data {
 }
 
 #[wasm_bindgen]
-pub fn render(markdown_input: &str) -> JsValue {
+pub fn render(markdown_input: &str, parse: Option<bool>) -> JsValue {
     console_error_panic_hook::set_once(); // Helps return errors for debugging
 
-    let parsed = parse_and_find_content(markdown_input);
-    let (frontmatter, content) = parsed.unwrap();
+    let (frontmatter, content) = get_frontmatter(markdown_input);
 
     if frontmatter.is_some() {
-        let mut value = String::new();
-        let mut emitter = YamlEmitter::new(&mut value);
-        emitter.dump(&frontmatter.unwrap()).unwrap();
-        let yaml_contents: serde_json::Value = serde_yaml::from_str(&value).unwrap();
-        let data = Data{data: yaml_contents, content: render_markdown(content)};
+        let yaml_contents: serde_json::Value = serde_yaml::from_str(&frontmatter.unwrap()).unwrap();
+        let data = Data{data: yaml_contents, content: match parse.unwrap_or(false) {
+            true => render_markdown(content),
+            false => content.to_string(),
+        }};
         return JsValue::from_serde(&data).unwrap();
     } else {
         let yaml_contents: serde_json::Value = serde_json::Value::Null;
-        let data = Data{data: yaml_contents, content: render_markdown(content)};
+        let data = Data{data: yaml_contents, content: match parse.unwrap_or(false) {
+            true => render_markdown(content),
+            false => content.to_string(),
+        }};
         return JsValue::from_serde(&data).unwrap();
     }
 }
