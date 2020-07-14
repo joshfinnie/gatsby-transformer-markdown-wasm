@@ -1,15 +1,15 @@
-const {render} = require('./pkg/');
+const {parse} = require('./pkg/');
 
 console.time()
-console.log(render("__strong__"));
-console.log(render("__strong__", true));
+console.log(parse("__strong__"));
+console.log(parse("__strong__", true));
 
-const data = render("---\ntitle: Valid Yaml Test\n---\nsomething that's *not* yaml");
+const data = parse("---\ntitle: Valid Yaml Test\n---\nsomething that's *not* yaml");
 
 console.log(`Data: ${JSON.stringify(data.data)}`);
 console.log(`Content: ${data.content}`);
 
-const data2 = render("---\ntitle: Valid Yaml Test\n---\nsomething that's *not* yaml", true);
+const data2 = parse("---\ntitle: Valid Yaml Test\n---\nsomething that's *not* yaml", true);
 
 console.log(`Data: ${JSON.stringify(data2.data)}`);
 console.log(`Content: ${data2.content}`);
@@ -31,8 +31,8 @@ Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos
 
 Morbi in dui quis est pulvinar ullamcorper. Nulla facilisi. Integer lacinia sollicitudin massa. Cras metus. Sed aliquet risus a tortor. Integer id quam. Morbi mi. Quisque nisl felis, venenatis tristique, dignissim in, ultrices sit amet, augue. Proin sodales libero eget ante. Nulla quam. Aenean laoreet. Vestibulum nisi lectus, commodo ac, facilisis ac, ultricies eu, pede. Ut orci risus, accumsan porttitor, cursus quis, aliquet eget, justo.`;
 
-render(bigMarkdown);
-render(bigMarkdown, true);
+parse(bigMarkdown);
+parse(bigMarkdown, true);
 
 const biggestMarkdown = `---
 
@@ -356,7 +356,7 @@ normal paragraph. For example:
 
 Use the \`printf()\` function.`;
 
-render(biggestMarkdown);
-render(biggestMarkdown, true);
+parse(biggestMarkdown);
+parse(biggestMarkdown, true);
 
 console.timeEnd();

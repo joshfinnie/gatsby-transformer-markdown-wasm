@@ -41,24 +41,20 @@ pub struct Data {
 }
 
 #[wasm_bindgen]
-pub fn render(markdown_input: &str, parse: Option<bool>) -> JsValue {
+pub fn parse(markdown_input: &str, parse: Option<bool>) -> JsValue {
     console_error_panic_hook::set_once(); // Helps return errors for debugging
 
     let (frontmatter, content) = get_frontmatter(markdown_input);
 
-    if frontmatter.is_some() {
-        let yaml_contents: serde_json::Value = serde_yaml::from_str(&frontmatter.unwrap()).unwrap();
-        let data = Data{data: yaml_contents, content: match parse.unwrap_or(false) {
-            true => render_markdown(content),
-            false => content.to_string(),
-        }};
-        return JsValue::from_serde(&data).unwrap();
-    } else {
-        let yaml_contents: serde_json::Value = serde_json::Value::Null;
-        let data = Data{data: yaml_contents, content: match parse.unwrap_or(false) {
-            true => render_markdown(content),
-            false => content.to_string(),
-        }};
-        return JsValue::from_serde(&data).unwrap();
-    }
+    let yaml_content = match frontmatter {
+        None => serde_json::Value::Null,
+        Some(data) => serde_yaml::from_str(&data).unwrap(),
+    };
+
+    let data = Data{data: yaml_content, content: match parse.unwrap_or(false) {
+        true => render_markdown(content),
+        false => content.to_string(),
+    }};
+
+    JsValue::from_serde(&data).unwrap()
 }
